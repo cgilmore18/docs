@@ -1,0 +1,349 @@
+
+# Revision `2024-02-15` (GA)
+
+> 🚧 From now on, we will only support documented revision headers.
+> 
+> A full list of documented revision headers is available in the dropdown at the top left of the developer portal.
+> 
+> Any revision request header that does not match one of our documented revisions will not be supported. If you receive a 404 error for an invalid revision, make sure to update your revision request header to one of <a href="https://developers.klaviyo.com/en/docs/api_versioning_and_deprecation_policy#api-versioning" target="_blank">our documented revisions</a>.
+
+### New Endpoints
+
+#### Reporting API for Campaign and Flow Performance Data
+
+- Our new Reporting API allows you to request campaign and flow performance data that you can view in the Klaviyo UI.
+- Request for campaign values data with <a href="https://developers.klaviyo.com/en/reference/query_campaign_values" target="_blank">Query Campaign Values</a>, or request for flow values data with <a href="https://developers.klaviyo.com/en/reference/query_flow_values" target="_blank">Query Flow Values</a>. <a href="https://developers.klaviyo.com/en/reference/query_flow_series" target="_blank">Query Flow Series</a> allows you to fetch flow series data for a specific interval and timeframe, for example, a flow performance report on weekly click rates during the past 12 months.
+
+#### Create or Update Profile API
+
+- We have added support for creating and/or updating a profile depending on whether or not a profile exists via the <a href="https://developers.klaviyo.com/en/reference/create_or_update_profile" target="_blank">Create or Update Profile</a> endpoint. This endpoint operates synchronously and offers an upsert pattern similar to <a href="https://developers.klaviyo.com/en/docs/apis_comparison_chart" target="_blank">the v1/v2 Identify API</a>.
+
+> ❗️ Breaking changes
+> 
+> #### Get Event(s) API
+> 
+> We have removed the `$attribution` field from `event_properties` starting with this revision. To include this data in your request, add `?include=attributions` to your request URL.
+
+# Revision `2023-12-15` (GA)
+
+### New Endpoints
+
+#### Bulk Profile Import API
+
+- We have added support for creating and updating profiles in bulk via the [Bulk Profile Import API](https://developers.klaviyo.com/en/reference/get_bulk_profile_import_jobs) to keep Klaviyo up-to-date with external systems of record.
+- These new endpoints can help you speed up initial onboarding, update profile properties regularly, or add a batch of profiles to a list when you don't have the Klaviyo profile ID. See [our guide on the Bulk Profile Import API](https://developers.klaviyo.com/en/docs/use_klaviyos_bulk_profile_import_api) for more information and use cases.
+
+### Improved Endpoints
+
+#### Subscribe Profiles API
+
+- The `list` relationship object on the [Subscribe Profiles API](https://developers.klaviyo.com/en/reference/subscribe_profiles) is now optional. When a `list` is not provided, the opt-in process uses the [account's default opt-in settings](https://www.klaviyo.com/settings/account/api-keys).
+- We have added improved validation behavior to the [Subscribe Profiles API](https://developers.klaviyo.com/en/reference/subscribe_profiles).
+
+# Revision `2023-10-15`(GA)
+
+### Improved Endpoints
+
+#### List Suppression Filtering
+
+We now support filtering on list suppression with the [Get Profiles](https://developers.klaviyo.com/en/reference/get_profiles) endpoint, which brings us to parity with the v2 [Get All Exclusions for a List](https://developers.klaviyo.com/en/v1-2/reference/get-list-exclusions) endpoint. 
+
+Examples:
+
+- **Get all profiles that were suppressed for email marketing since 10/1/2023**: `GET /api/profiles?filter=greater-than(subscriptions.email.marketing.suppression.timestamp,2023-10-01T01:00:00Z)`
+- **Get all profiles that had a list suppression created for the given LIST_ID since 10/1/2023**: `GET /api/profiles?filter=greater-than(subscriptions.email.marketing.list_suppressions.timestamp,2023-10-01T01:00:00Z),equals(subscriptions.email.marketing.list_suppressions.list_id,”LIST_ID”)`
+- **Get all profiles that were suppressed with a "user_suppressed" reason since 10/1/2023**:   `GET /api/profiles?filter=greater-than(subscriptions.email.marketing.suppression.timestamp,2023-10-01T01:00:00Z),equals(subscriptions.email.marketing.suppression.reason,"user_suppressed")`
+
+#### Optionally Retrieve Subscription Status on Get List Profiles, Get Segment Profiles, Get Event Profile
+
+Now you can retrieve subscription status on any endpoint that returns profiles, including [Get List Profiles](https://developers.klaviyo.com/en/reference/get_list_profiles), [Get Segment Profiles](https://developers.klaviyo.com/en/reference/get_segment_profiles) and [Get Event Profile](https://developers.klaviyo.com/en/reference/get_event_profile).  Use `?additional-fields[profile]=subscriptions` on these endpoints to include subscription information.
+
+> ❗️ Breaking changes
+> 
+> #### Profile Subscription Request Structure Changed
+> 
+> The request structure to subscribe a profile to a list has changed:
+> 
+> ```Text Before
+> "subscriptions": {
+>                 "email": [
+>                   "MARKETING"
+>                 ],
+>                 "sms": [
+>                   "MARKETING"
+>                 ]
+> }
+> ```
+> ```Text After
+> "subscriptions": {
+>                 "email": {
+>                   "marketing": {
+>                     "consent": "SUBSCRIBED"                    
+>                   }
+>                 },
+>                 "sms": {
+>                   "marketing": {
+>                     "consent": "SUBSCRIBED"
+>                   }
+>                 }
+> ```
+> 
+> #### Profile Subscription Response Fields Renamed
+> 
+> In the interest of providing more clarity and information on the subscription object, we have renamed and added several fields. This will provide more context on a contact’s subscriptions and consent, as well as boolean fields to simply see who you can or cannot message.
+> 
+> For SMS marketing:
+> 
+> - `timestamp` is now `consent_timestamp`.
+> - `last_updated` is a new field that mirrors `consent_timestamp`.
+> - `can_receive_sms_marketing` is a new field that shows whether a profile can receive SMS marketing.
+> 
+> For email marketing:
+> 
+> - `timestamp` is now `consent_timestamp.`
+> - `can_receive_email_marketing` is a new field that shows whether a profile can receive SMS marketing.
+> - `suppressions` is now `suppression.`
+> - `last_updated` is a new field that is the most recent of all the dates on the object.
+> 
+> #### Subscription Object Not Returned by Default on Get Profile / Get Profiles
+> 
+> The subscription object is now optional for the [Get Profile](https://developers.klaviyo.com/en/reference/get_profile) and [Get Profiles](https://developers.klaviyo.com/en/reference/get_profiles) endpoints. It will not be returned by default, but can be included in the request by adding   `?additional-fields[profile]=subscriptions` to the request. This change will allow for a more performant experience when making requests to Get Profiles without including the subscriptions object. Check out our [consent guide](https://developers.klaviyo.com/en/docs/collect_email_and_sms_consent_via_api#the-subscriptions-object) for information on our `subscriptions` object, filtering rules, and more.
+
+# Revision `2023-09-15` (GA)
+
+### New Endpoints
+
+#### Coupons APIs
+
+We have added support for creating coupons and coupon codes for use in messaging via our APIs. Check out the <a href="https://developers.klaviyo.com/en/docs/use_klaviyos_coupons_api" target="_blank">Coupons API guide</a>  for more information.  
+View the coupons and coupon codes in your account with [Get Coupons](https://developers.klaviyo.com/en/reference/get_coupons) and [Get Coupon Codes](https://developers.klaviyo.com/en/reference/get_coupon_codes). Create coupons and coupon codes with [Create Coupon](https://developers.klaviyo.com/en/reference/create_coupon) and [Create Coupon Code](https://developers.klaviyo.com/en/reference/create_coupon_code). You can also create bulk jobs for coupon codes using our bulk endpoints. 
+
+#### Images APIs
+
+Upload new images to your account from an image file with [Upload Image from File](https://developers.klaviyo.com/en/reference/upload_image_from_file) or from a remote URL or data URI with [Upload Image from URL](https://developers.klaviyo.com/en/reference/upload_image_from_url).  
+Retrieve one or more images from your account using [Get Image](https://developers.klaviyo.com/en/reference/get_image) and [Get Images](https://developers.klaviyo.com/en/reference/get_images) endpoints. You can also update an existing image’s name, or update the hidden status of an image with [Update Image](https://developers.klaviyo.com/en/reference/update_image).
+
+#### Merge Profile API
+
+You can now merge an existing profile with another given profile with [Merge Profiles](https://developers.klaviyo.com/en/reference/merge_profiles). Pass the profile you wish to merge via the relationships object (the "source" profile) to a profile with the given profile ID as the base data object (the "destination" profile).
+
+### Improved Endpoints
+
+#### List and Segment Membership Sorting and Filtering
+
+[Get List Profiles](https://developers.klaviyo.com/en/reference/get_list_profiles), [Get Segment Profiles](https://developers.klaviyo.com/en/reference/get_segment_profiles), [Get List Relationships Profiles](https://developers.klaviyo.com/en/reference/get_segment_profiles), [Get Segment Relationships Profiles](https://developers.klaviyo.com/en/reference/get_segment_relationships_profiles) now include a `joined_group_at` field in the payload that can be used for sorting and filtering by a profile’s most recent join date. For example, you can get the profiles that have joined a list after 2023-09-14T00:00Z with `GET /api/lists/LIST_ID/profiles?sort=joined_group_at&filter=greater-than(joined_group_at,2023-09-14T00:00Z)`.
+
+#### Raised Maximum Page Size for List and Segment Relationships Profile Endpoints
+
+[Get List Relationships Profiles](https://developers.klaviyo.com/en/reference/get_list_relationships_profiles) and [Get Segment Relationships Profiles](https://developers.klaviyo.com/en/reference/get_segment_relationships_profiles) now support a page size of 1,000 profiles, e.g. `GET /api/lists/1/relationships/profiles?page[size]=1000`.
+
+> 🚧 To access the new Images and Coupons APIs, you'll need to generate a new private API key
+> 
+> The Images and Coupons APIs require new private API key scopes, so you will need to generate a new private API key that includes these scopes in order to use them. Note that you will need to generate a new private API key even for previously created Full Access scoped keys if the scopes were not available when you generated that key.
+
+# Revision `2023-08-15` (GA)
+
+### New Endpoints
+
+#### Flow Message Templates
+
+- You can now retrieve the templates associated with flow messages using [Get Flow Message Template](ref:get_flow_message_template) or [Get Flow Message Relationships Template](ref:get_flow_message_relationships_template). You’re also able to include the template HTML for a flow message using `GET /api/flow-messages/FLOW_MESSAGE_ID?include=template`. 
+
+#### Create or Update Push Tokens
+
+- We have added an endpoint to create push tokens, [Create or Update Push Token](ref:create_push_token).  This endpoint can be used to migrate profiles and their push tokens from another platform to Klaviyo. If you’re looking to register push tokens from users’ devices, please use our [mobile SDKs](https://developers.klaviyo.com/en/docs/sdk_overview#mobile-sdks).
+
+# Revision `2023-08-15.pre` (Beta)
+
+Endpoints in beta are subject to change and should not be used in production. To learn more see our [API versioning and deprecation](https://developers.klaviyo.com/en/docs/api_versioning_and_deprecation_policy) policy. 
+
+If you have feedback about these endpoints, please reach out in our [developer community](https://community.klaviyo.com/groups/developer-group-64) or fill out [this form](https://forms.gle/gBJCj84JXUecDsxu9) to provide feedback.
+
+### New Endpoints
+
+#### Coupon APIs
+
+- We have added support for creating coupons and coupon codes for use in messaging via our APIs. Check out the <a href="https://developers.klaviyo.com/en/v2023-08-15.pre/docs/use_klaviyos_coupons_api" target="_blank">Coupons API guide</a>  for more information.
+
+# Revision `2023-07-15` (GA)
+
+### New endpoints
+
+#### Back in stock APIs
+
+- We have added support for subscribing to back in stock in our latest API revision. Not only can you subscribe profiles to back in stock notifications for email, but also you can subscribe profiles to back in stock for SMS. To learn more, check out our [guide to setting up back in stock](https://developers.klaviyo.com/en/docs/how_to_set_up_custom_back_in_stock). 
+
+#### Campaign APIs: SMS support + relationships support
+
+- [Get Campaigns](https://developers.klaviyo.com/en/reference/get_campaigns) and [Create Campaign](https://developers.klaviyo.com/en/reference/create_campaign): CRUD support for SMS campaigns is now available. You can also now retrieve all messages for a campaign to easily view performance data on campaigns where you’re running A/B tests. To support this functionality, we introduced a relationship between campaigns and campaign messages, and campaign messages and templates. 
+
+#### Bulk Create Client Events API
+
+- [Bulk Create Client Events](https://developers.klaviyo.com/en/reference/bulk_create_client_events): It is now easier and more performant to track activity for a profile from client-side contexts, such as the browser. Send events in a batch for a single profile, saving data and battery for your end-users’ devices.
+
+#### Push Token Registration APIs
+
+- [Create or Update Client Push Token](https://developers.klaviyo.com/en/reference/create_client_push_token) and [Unregister Client Push Token](https://developers.klaviyo.com/en/reference/unregister_client_push_token): Register and unregister push tokens. If you have a native iOS or Android app, we highly recommend that you use our mobile SDKs directly ([Swift SDK](https://github.com/klaviyo/klaviyo-swift-sdk), [Android SDK](https://github.com/klaviyo/klaviyo-android-sdk)). 
+
+### Improved Endpoints
+
+- [Update Profile](https://developers.klaviyo.com/en/reference/update_profile) now supports appending, unappending, and unsetting profile properties in the `meta.patch_properties` section of the request payload using `append` `unappend` and `unset` keys. 
+
+> ❗️ Breaking changes
+> 
+> #### Relationship standardization
+> 
+> We are making a number of changes across endpoints to standardize how we handle relationships in our APIs and ensure consistently typed objects across endpoints.
+> 
+> For example, now you can create a profile in our APIs in the same shape, whether you’re calling the profiles endpoint or the events endpoint to do so. 
+> 
+> This update makes a number of breaking changes to endpoints including but not limited to:
+> 
+> - [Create Client Event](ref:create_client_event) and [Create Event](ref:create_event)
+> - [Get Events](ref:get_events) and [Get Event](ref:get_event)
+> - [Create Client Subscription](ref:create_client_subscription) and [Subscribe Profiles](ref:subscribe_profiles) 
+> - [Request Profile Deletion](ref:request_profile_deletion)
+> - [Unsubscribe Profiles](ref:unsubscribe_profiles)
+> 
+> For more information about how to handle relationships with this revision **and a comprehensive list of endpoints that need to be upgraded due to breaking changes**, check out our [relationships migration guide](https://developers.klaviyo.com/en/docs/migrate_to_2023_07_15_relationships).
+> 
+> Relationship standardization changes include: 
+> 
+> - Updating 1:1 relationships to use singular tense and an object (instead of plural and an array)
+>   - Example: `GET https://a.klaviyo.com/api/flow-actions/1/?include=flows` (now "flow")
+> 
+> - Moving related object IDs from the attributes payload to relationships
+>   - Example: `POST https://a.klaviyo.com/api/tags/`
+> 
+> - Specifying a relationship between two Klaviyo objects to allow for improved consistency and greater interoperability across endpoints 
+>   - Example: `POST https://a.klaviyo.com/api/events/`. You can now create/update a profile for an event in the same way you would when using the Profiles API directly. 
+> 
+> These changes improve the connectivity and consistency across our API surface and make it much easier to accomplish tasks that involve relationships across resources. Previous to this revision, getting the template content for a campaign required 3 API calls. After this release, you can do it in just one: `GET /api/campaigns/:id/campaign-messages/?include=template`.
+> 
+> #### Removed `company_id` from Get Template(s)
+> 
+> We removed the `company_id` from the response for [Get Template](https://developers.klaviyo.com/en/reference/get_template) and [Get Templates](https://developers.klaviyo.com/en/reference/get_templates). If you need to obtain the company ID / public API key for an account, please use the Accounts API.
+
+_Update 2023-07-20_
+
+- Added `reply_to_email`, `cc_email`, and `bcc_email` field options in the following places:
+  - The [Create Campaign](https://developers.klaviyo.com/en/reference/create_campaign) endpoint
+  - The [Update Campaign Message](https://developers.klaviyo.com/en/reference/update_campaign_message) endpoint
+  - Any campaign message response
+
+# Revision `2023-06-15` (GA)
+
+### New endpoints
+
+[Accounts](ref:accounts): Use our new Accounts API endpoints to retrieve account-specific data  (contact information, timezone, currency, Public API key, etc.) or test if a private API key belongs to the correct account prior to performing subsequent actions with the API.
+
+### Get List and Segment member count
+
+- [Get List](https://developers.klaviyo.com/en/reference/get_list) and [Get Segment](https://developers.klaviyo.com/en/reference/get_segment) now support returning the count of members in the response by including `?additional-fields[segment]=profile_count` or `?additional-fields[list]=profile_count` in the request parameters.
+
+### Rate limit increases
+
+- Get List Profiles, Get Segment Profiles, and Get Profiles were increased to the L rate limit tier.
+
+### Framework Improvements
+
+- Implemented [Query Param Rate Limits](https://developers.klaviyo.com/en/docs/rate_limits_and_error_handling#query-param-rate-limits)
+
+> 🚧 To access the new accounts scope, you’ll need to generate a new Private API Key
+> 
+> [Get Account](ref:get_account) and [Get Accounts](ref:get_accounts) require a new private API key scope (Account Read), so you will need to generate a new private API key that includes the scope in order to use the endpoint. You will need to generate a new private API key even for previously created Full Access scoped keys if the scope was not available when you generated that key.
+
+# Revision `2023-02-22` (GA)
+
+### New endpoints
+
+- [Campaigns](ref:campaigns): Use our new Campaigns API endpoints to programmatically create, update, delete, and send email campaigns. See the API reference documentation for more info. We plan to introduce SMS support in the future.
+
+> ❗️ Breaking changes
+> 
+> - Updated [Flows](ref:flows) endpoints to use cursor-based pagination. This change brings flows pagination to parity with our other API endpoints. You can learn more about cursor-based pagination in our [API Overview](ref:api_overview#pagination).
+> - Profile fields can now be nulled out by passing `null` into a profile field via the [Update Profile](ref:update_profile) endpoint.
+
+_Update 2023-06-06_
+
+- The steady rate limit for [Create Client Subscription](ref:create_client_subscription) has increased to `700/m`.
+
+_Update 2023-05-30_
+
+- [Get Profiles](ref:get_profiles) now support filtering by a `datetime` range. You can filter a `datetime` range by using the `greater-than` and `less-than` filters in combination, similar to this example: `https://a.klaviyo.com/api/profiles/?filter=less-than(updated,2023-04-26T00:00:00Z),greater-than(updated,2023-04-19T00:00:00Z)`.
+
+_Update 2023-04-06_
+
+- The [Get Profile](https://developers.klaviyo.com/en/reference/get_profile) and [Get Profiles](https://developers.klaviyo.com/en/reference/get_profiles) endpoints now allow you to request predictive analytics such as customer lifetime value (CLV), along with other profile information. You can request these new fields by appending `?additional-fields[profile]=predictive_analytics` to the request URL.
+- Each `relationship` endpoint has been split to make a specific endpoint URL for each unique related resource field. Note, this is only a documentation change. For example, the `Get Profile Relationships` endpoint is now split into [Get Profile Relationships Lists](ref:get_profile_relationships_lists) and [Get Profile Relationships Segments](ref:get_profile_relationships_segments) endpoints in the documentation. The URLs for these endpoints remain unchanged.
+
+_Update 2023-03-28_
+
+- You can now `filter` events using the `profile_id` field in [Get Events](ref:get_events). This allows you to retrieve all the events for a given profile for all metrics or retrieve events for a specific metric if paired with the `metric_id` filter.
+
+_Update 2023-03-07_
+
+- The [Get Profile](ref:get_profile) and [Get Profiles](ref:get_profiles) endpoints now include each profile’s email and SMS subscription information, including:
+  - Their current consent status.
+  - When and how they subscribed or unsubscribed.
+  - Their global and list-specific suppressions (email only).
+- You can now `filter` and `sort` profiles using the `updated` field in [Get Profiles](ref:get_profiles).
+
+# Revision `2023-01-24` (GA)
+
+### New endpoints
+
+- [Tags](ref:tags): Use our new Tags API endpoints to create, read, update, and delete tags on various Klaviyo objects such as campaigns, flows, lists and segments. See the API reference documentation for more info.
+- [Data Privacy - Request Profile Deletion](ref:data-privacy): Use our new Data Privacy - Request Profile Deletion API endpoint to delete profiles with a provided identifier (i.e. `profile_id`, `email`, `phone_number`). See the API reference documentation for more info.
+
+> ❗️ Breaking changes
+> 
+> - Changed url path for [Create Template Render](ref:create_template_render) from `https://a.klaviyo.com/api/templates/{id}/render/` to `https://a.klaviyo.com/api/template-render/`
+> - Changed url path for [Create Template Clone](ref:create_template_clone) from `https://a.klaviyo.com/api/templates/{id}/clone/` to `https://a.klaviyo.com/api/template-clone/`
+
+_Update 2024-01-24_
+
+> 🚧 This revision is deprecated.
+> 
+> You should plan to update your apps to our latest stable revision, before the revision is retired on January 24, 2025 to avoid breakages in your app. See our updated [API versioning and deprecation policy](https://developers.klaviyo.com/en/docs/api_versioning_and_deprecation_policy) for more information.
+
+_Update 2023-02-14_
+
+- The `price` field can now be optionally supplied in the payload for [Create Catalog Item](ref:create_catalog_item) and [Update Catalog Item](ref:update_catalog_item) endpoints. This field can be used to set the price on the catalog item.
+
+_Update 2023-02-07_
+
+- A `channels` object can now be optionally supplied in the payload for the [Subscribe Profiles](https://developers.klaviyo.com/en/v2023-01-24/reference/subscribe_profiles) endpoint. When `channels` is provided, only the specified channels and message types will be subscribed. If `channels` is not provided, we will subscribe all channels for which identifiers (i.e. `phone_number` or `email`) are provided.
+
+- The `profile_id` field can now be optionally supplied in the payload for the [Subscribe Profiles](https://developers.klaviyo.com/en/v2023-01-24/reference/subscribe_profiles) endpoint. This will be the id of the profile to subscribe.
+
+# Revision `2022-10-17` (GA)
+
+- Welcome to our new API changelog! This log will be kept up-to-date on the latest changes, bug fixes, and breaking changes to Klaviyo's APIs. Please note that this changelog only includes changes to new APIs released after **10/19/2022**.
+- For further information about revisions and breaking changes, please review the [API versioning & deprecation policy](doc:api_versioning_and_deprecation_policy).
+- Kickstart your migration to Klaviyo's new APIs with the [API comparison chart](doc:apis_comparison_chart), a detailed overview of what's changed from the v1/v2 endpoints to the new endpoints.
+
+_Update 2024-01-24_
+
+> 🚧 This revision is deprecated.
+> 
+> You should plan to update your apps to our latest stable revision, before the revision is retired on October 17, 2024 to avoid breakages in your app. See our updated [API versioning and deprecation policy](https://developers.klaviyo.com/en/docs/api_versioning_and_deprecation_policy) for more information.
+
+_Update 2023-01-20_
+
+- The `list_id` attribute for the [Unsubscribe Profiles](ref:unsubscribe_profiles) endpoint is now an optional attribute instead of a required.
+
+_Update 2023-01-11_
+
+- The [Create Profile](ref:create_profile) and [Update Profile](ref:update_profile) endpoints now accept a phone number as an identifier even if SMS is not set up in the associated Klaviyo account. A successful call requires one other profile identifier attribute (`email`, `external_id`, or `anonymous_id`), in addition to a phone number.
+
+_Update 2022-12-19_
+
+- The reference documentation and OpenAPI Spec (OAS) for the [Create Template Render](ref:create_template_render) and [Create Template Clone](ref:create_template_clone) endpoints have been updated to reflect the correct required fields. This update resolves a minor bug in our documentation where a required field needed to call the endpoints successfully was missing. No changes have been made to these endpoints.
+
+_Update 2022-11-02_
+
+> ❗️ Breaking change
+> 
+> - Removed the `updated` filter parameter from the [Get Profiles endpoint](ref:get_profiles). This filter parameter was not intended for GA release and is not officially supported.
+> - This change takes effect immediately due to site reliability concerns. Please refer to the [breaking change policy](doc:api_versioning_and_deprecation_policy#what-is-a-breaking-change) for more information.
