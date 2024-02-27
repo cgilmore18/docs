@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/schema.json",
-  "name": "Starter Kit",
+  "name": "Klaviyo Developers",
   "logo": {
     "dark": "/logo/dark.svg",
     "light": "/logo/light.svg"
@@ -21,8 +21,8 @@
       "url": "mailto:hi@mintlify.com"
     },
     {
-      "name": "Changelog",
-      "url": "www.klaviyo.com"
+      "name": "Changelog"
+      "url": 
     }
   ],
   "topbarCtaButton": {
