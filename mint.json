@@ -72,7 +72,7 @@
         "essentials/settings",
         "essentials/navigation",
         "essentials/reusable-snippets",
-        "essentials/test"
+        "v1/essentials/test"
       ]
     },
     {
